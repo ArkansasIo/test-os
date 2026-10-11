@@ -1,4 +1,6 @@
-obj-m += aetheros.o
+obj-m += aetheros_nexus.o
+
+aetheros_nexus-y := aetheros_main.o banner.o identity.o proc.o
 
 KDIR ?= /lib/modules/$(shell uname -r)/build
 PWD  := $(shell pwd)
