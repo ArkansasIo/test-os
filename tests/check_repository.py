@@ -63,6 +63,23 @@ if "src/boot/aetheros.c" not in makefile:
 if '"--aetheros-screen"' not in frontend or "aetheros_render(s)" not in frontend:
     fail("AetherOS screen is not wired to the native C CLI")
 
+
+# The kernel integration must be real, buildable C module source, not UI-only.
+kernel_module = ROOT / "kernel/aetheros/aetheros.c"
+kernel_makefile = ROOT / "kernel/aetheros/Makefile"
+kernel_docs = ROOT / "kernel/aetheros/README.md"
+if not kernel_module.is_file():
+    fail("Missing AetherOS Linux kernel module source")
+else:
+    kernel_text = kernel_module.read_text(encoding="utf-8")
+    for token in ("module_init(", "module_exit(", "proc_create(", "MODULE_LICENSE("):
+        if token not in kernel_text:
+            fail(f"AetherOS kernel module missing required kernel integration: {token}")
+if not kernel_makefile.is_file():
+    fail("Missing AetherOS kernel module Makefile")
+if not kernel_docs.is_file():
+    fail("Missing AetherOS kernel build and test instructions")
+
 # Catch accidental editor/chat debris before SQL's first executable statement.
 allowed_starts = ("--", "/*", "CREATE ", "USE ", "INSERT ", "SET ")
 for sql in sorted((ROOT / "sql").rglob("*.sql")):
