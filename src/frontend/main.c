@@ -23,6 +23,7 @@
 
 #include "boot.h"
 #include "aetheros.h"
+#include "aetheros.h"
 #include "login.h"
 #include "machine.h"
 #include "menu.h"
@@ -50,6 +51,7 @@ struct frontend_opts
     int boot_menu;   /* --boot-menu : the loader text menu + linux handoff */
     int boot_sequence; /* --boot-sequence : POST -> loader -> loading -> handoff */
     int aetheros_screen; /* --aetheros-screen : native C AetherOS terminal UI */
+    int aetheros_screen; /* --aetheros-screen : native C AetherOS terminal UI */
     int show_textui; /* --textui    : dump every boot screen and exit */
     const char *boot_file;
     const char *user;
@@ -72,6 +74,7 @@ static void usage(const char *argv0)
     printf("  --sound-test     verify the tone generator, then exit\n");
     printf("  --boot-menu      show the Linux boot loader menu, then hand off\n");
     printf("  --boot-sequence  show POST, loader, loading and kernel handoff screens\n");
+    printf("  --aetheros-screen render the AetherOS Nexus screen in native C\n");
     printf("  --textui         dump every boot text screen (loader -> login)\n");
     printf("  -h, --help       this text\n\n");
     printf("Without a session option the front end boots the machine and\n");
@@ -181,6 +184,10 @@ static int parse_args(int argc, char **argv, struct frontend_opts *o)
         else if (osb_streq(a, "--boot-sequence"))
         {
             o->boot_sequence = 1;
+        }
+        else if (osb_streq(a, "--aetheros-screen"))
+        {
+            o->aetheros_screen = 1;
         }
         else if (osb_streq(a, "--textui"))
         {
@@ -785,6 +792,19 @@ int main(int argc, char **argv)
         return run_textui_dump() == OSB_OK ? OSB_OK : OSB_ERR;
     if (o.boot_sequence)
         return run_boot_sequence() == OSB_OK ? OSB_OK : OSB_ERR;
+    if (o.aetheros_screen)
+    {
+        struct textui_screen *s = calloc(1, sizeof(*s));
+        struct textui_terminal t = {1, 1};
+        if (s == NULL)
+            return OSB_ENOMEM;
+        textui_screen_init(s);
+        aetheros_render(s);
+        printf("\\033[2J");
+        textui_flush(s, &t);
+        free(s);
+        return OSB_OK;
+    }
     if (o.boot_menu)
         return run_boot_menu() == OSB_OK ? OSB_OK : OSB_ERR;
 
