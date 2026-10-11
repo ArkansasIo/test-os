@@ -12,29 +12,32 @@ define NEWLINE
 endef
 
 # mingw32-make on Windows runs recipes through cmd.exe, so the commands below
-# have to be ones cmd understands. cmd's mkdir and rmdir accept forward slashes
-# (mkdir build/a/b/c creates every level), so the recipes stay host-portable
-# without depending on a POSIX shell being installed.
+# have to be ones cmd understands. cmd's mkdir/rmdir only accept BACKSLASH path
+# separators -- `mkdir build/muthur` fails with "the syntax of the command is
+# incorrect" -- so the Windows branch uses backslashes throughout. The recipes
+# stay host-portable without depending on a POSIX shell being installed.
 ifeq ($(OS),Windows_NT)
   # Force cmd.exe as the recipe shell. If MSYS/Git's sh.exe is on PATH, make
   # picks it automatically, and the cmd built-ins below (mkdir, rmdir,
   # `if not exist`) then fail with "syntax of the command is incorrect".
   SHELL  := cmd.exe
   .SHELLFLAGS := /c
-  EXE := .exe
+  # cmd cannot run "build/osborne1.exe": a forward slash makes it look for a
+  # command called "build". The run commands are spelled out in full.
+  BINCMD := .\build\osborne1.exe
   # cmd's mkdir fails if the directory already exists, which aborts the whole
   # recipe. The `dirs` target guards each call so it is idempotent on Windows.
   MKDIRS := mkdir
   RMDIR  := rmdir /s /q
   RM     := rmdir /s /q
 else
-  EXE :=
+  BINCMD := ./build/osborne1
   MKDIRS := mkdir -p
   RMDIR  := rm -rf
   RM     := rm -f
 endif
 
-BIN     := $(BUILD)/osborne1$(EXE)
+BIN     := $(BUILD)/osborne1$(if $(filter Windows_NT,$(OS)),.exe,)
 
 SRC := \
 	src/muthur/muthur.c \
@@ -63,14 +66,14 @@ ifeq ($(OS),Windows_NT)
 # several commands confuses cmd.exe when make hands it the whole recipe.
 dirs:
 	@if not exist $(BUILD) mkdir $(BUILD)
-	@if not exist $(BUILD)/muthur mkdir $(BUILD)/muthur
-	@if not exist $(BUILD)/login mkdir $(BUILD)/login
-	@if not exist $(BUILD)/boot mkdir $(BUILD)/boot
-	@if not exist $(BUILD)/screen mkdir $(BUILD)/screen
-	@if not exist $(BUILD)/menus mkdir $(BUILD)/menus
-	@if not exist $(BUILD)/modules mkdir $(BUILD)/modules
-	@if not exist $(BUILD)/sound mkdir $(BUILD)/sound
-	@if not exist $(BUILD)/frontend mkdir $(BUILD)/frontend
+	@if not exist $(BUILD)\muthur mkdir $(BUILD)\muthur
+	@if not exist $(BUILD)\login mkdir $(BUILD)\login
+	@if not exist $(BUILD)\boot mkdir $(BUILD)\boot
+	@if not exist $(BUILD)\screen mkdir $(BUILD)\screen
+	@if not exist $(BUILD)\menus mkdir $(BUILD)\menus
+	@if not exist $(BUILD)\modules mkdir $(BUILD)\modules
+	@if not exist $(BUILD)\sound mkdir $(BUILD)\sound
+	@if not exist $(BUILD)\frontend mkdir $(BUILD)\frontend
 else
 dirs:
 	@$(MKDIRS) $(BUILD)
@@ -85,19 +88,19 @@ $(BUILD)/%.o: src/%.c
 	$(CC) $(CFLAGS) -c -o $@ $<
 
 run: all
-	$(BIN)
+	$(BINCMD)
 
 # Render the 2600 Hz tone, the Pong effects, and the printer to build/*.wav
 demo: all
-	$(BIN) --sound-demo
-	$(BIN) --printer-demo
+	$(BINCMD) --sound-demo
+	$(BINCMD) --printer-demo
 
 test: all
-	$(BIN) --list
-	$(BIN) --sound-test
+	$(BINCMD) --list
+	$(BINCMD) --sound-test
 
 printer: all
-	$(BIN) --printer-demo
+	$(BINCMD) --printer-demo
 
 clean:
 	-$(RMDIR) $(BUILD)
