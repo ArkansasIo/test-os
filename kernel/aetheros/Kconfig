@@ -1,0 +1,7 @@
+config AETHEROS_BRANDING
+	tristate "AetherOS Nexus kernel branding module"
+	depends on PROC_FS
+	help
+	  Adds a read-only /proc/aetheros_identity entry and a branded
+	  startup banner to the kernel log. This is a real kernel module;
+	  it does not replace the kernel's early boot graphics or login manager.
