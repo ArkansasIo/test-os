@@ -58,8 +58,9 @@ void aetheros_render(struct textui_screen *s)
 
     textui_box(s, 14, 1, 22, 40, AETHER_BLUE);
     put_clipped(s, 14, 3, AETHER_TEXT, " SYSTEM POST / CORE v1.0.0 ");
-    for (i = 0; i < 7; ++i)
+    for (i = 0; i < 6; ++i)
         put_clipped(s, 16 + i, 3, AETHER_TEXT, checks[i]);
+    put_clipped(s, 22, 3, AETHER_TEXT, checks[7]);
     put_clipped(s, 23, 2, AETHER_MUTED,
                 "DEMO: diagnostics are illustrative, not hardware measurements.");
 
