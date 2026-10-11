@@ -1,0 +1,130 @@
+{
+  "id": "main",
+  "title": "Osborne Desktop",
+  "items": [
+    {
+      "id": "applications",
+      "label": "Applications",
+      "icon": "apps",
+      "submenu": {
+        "id": "applications",
+        "items": [
+          {
+            "id": "cpm",
+            "label": "CP/M 2.2",
+            "icon": "terminal",
+            "action": "launch:osborne1 --disk A:boot.cpm"
+          },
+          {
+            "id": "terminal",
+            "label": "Terminal",
+            "icon": "terminal",
+            "action": "launch:xterm"
+          },
+          {
+            "id": "files",
+            "label": "File Manager",
+            "icon": "folder",
+            "action": "launch:pcmanfm"
+          },
+          {
+            "id": "editors",
+            "label": "Editors",
+            "icon": "edit",
+            "submenu": {
+              "id": "editors",
+              "items": [
+                { "id": "vi",     "label": "Vi",     "action": "launch:vi" },
+                { "id": "nano",   "label": "Nano",   "action": "launch:nano" },
+                { "id": "gvim",   "label": "GVim",   "action": "launch:gvim" }
+              ]
+            }
+          },
+          {
+            "id": "devtools",
+            "label": "Development",
+            "icon": "code",
+            "submenu": {
+              "id": "devtools",
+              "items": [
+                { "id": "z80asm",  "label": "Z80 Assembler", "action": "launch:z80asm" },
+                { "id": "dbuild",  "label": "Disk Builder",  "action": "launch:mkdsk" },
+                { "id": "dbview",  "label": "Database",      "action": "launch:mysql-client" }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "system",
+      "label": "System",
+      "icon": "gear",
+      "submenu": {
+        "id": "system",
+        "items": [
+          { "id": "print",     "label": "Print Test Page", "action": "print:testpage.txt" },
+          { "id": "settings",  "label": "Settings",      "action": "launch:os-settings" },
+          { "id": "services",  "label": "Services",      "action": "launch:systemctl --type=service" },
+          { "id": "disks",     "label": "Disks",         "action": "launch:os-disks" },
+          {
+            "id": "power",
+            "label": "Power",
+            "icon": "power",
+            "submenu": {
+              "id": "power",
+              "items": [
+                { "id": "lock",     "label": "Lock",     "action": "os-desktop lock" },
+                { "id": "suspend",  "label": "Suspend",  "action": "systemctl suspend" },
+                { "id": "reboot",   "label": "Reboot",   "action": "systemctl reboot" },
+                { "id": "shutdown", "label": "Shut Down","action": "systemctl poweroff" }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "server",
+      "label": "Server",
+      "icon": "server",
+      "submenu": {
+        "id": "server",
+        "items": [
+          { "id": "start-vnc",  "label": "Start VNC",     "action": "os-served --vnc :1" },
+          { "id": "start-api",  "label": "Start REST API","action": "os-served --api 8080" },
+          {
+            "id": "databases",
+            "label": "Databases",
+            "icon": "db",
+            "submenu": {
+              "id": "databases",
+              "items": [
+                { "id": "mysql",      "label": "MySQL Status", "action": "systemctl status mysqld" },
+                { "id": "mysql-cli",  "label": "MySQL Shell",  "action": "launch:mysql osborne_cpm" },
+                { "id": "backup",     "label": "Backup Now",   "action": "os-db-backup" }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "session",
+      "label": "Session",
+      "icon": "user",
+      "submenu": {
+        "id": "session",
+        "items": [
+          { "id": "lock",      "label": "Lock Screen",   "action": "os-desktop lock" },
+          { "id": "logout",    "label": "Log Out",       "action": "logout:user" },
+          { "id": "switch",    "label": "Switch User",   "action": "logout:switch" },
+          { "id": "unloadall", "label": "Unload Modules","action": "modules:unload-all" },
+          { "id": "reboot",    "label": "Reboot",        "action": "systemctl reboot" },
+          { "id": "shutdown",  "label": "Shut Down",     "action": "systemctl poweroff" }
+        ]
+      }
+    },
+    { "id": "help", "label": "Help", "icon": "help", "action": "launch:os-help" }
+  ]
+}

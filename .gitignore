@@ -1,0 +1,9 @@
+build/
+*.o
+*.obj
+*.exe
+*.bin
+*.dsk.user
+*.log
+*.tmp
+.DS_Store
