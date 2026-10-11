@@ -103,4 +103,59 @@ int init_service_started(int i);
 /* Print the service list, one line per service (init --list). */
 void init_dump(void);
 
+/* --- Boot manager text interface --------------------------------------- */
+/* The menu the loader draws before the kernel is loaded. It is built from the
+ * same os/loader.conf the loader reads, with the built-in entry list as a
+ * fallback when that file is missing, so `osborne1 --boot-menu` always has
+ * something to show. */
+
+#define BOOT_MANAGER_MAX_ENTRIES 16
+#define BOOT_MANAGER_DEFAULT_TITLE "GNU GRUB  version 2.06 (osborne1-cpm)"
+
+enum boot_manager_kind
+{
+    BOOT_MGR_FLOPPY = 0,
+    BOOT_MGR_DISK,
+    BOOT_MGR_NET,
+    BOOT_MGR_RESCUE,
+    BOOT_MGR_MEMTEST
+};
+
+struct boot_manager_entry
+{
+    char id[16];
+    char label[64];
+    char version[16];
+    char cmdline[128];
+    enum boot_manager_kind kind;
+    int enabled;
+};
+
+struct boot_manager_config
+{
+    struct boot_manager_entry entries[BOOT_MANAGER_MAX_ENTRIES];
+    int count;
+    int default_index;
+    int timeout_s;
+    char title[64];
+};
+
+/* Seed the built-in fallback entry list (used when no config is present). */
+int boot_manager_defaults(struct boot_manager_config *cfg);
+
+/* Load the boot menu from os/loader.conf (NULL = that path). A missing config
+ * leaves the built-in list in place and still returns OSB_OK. */
+int boot_manager_config(struct boot_manager_config *cfg, const char *path);
+
+int boot_manager_find(const struct boot_manager_config *cfg, const char *id);
+const char *boot_manager_kind_name(enum boot_manager_kind k);
+
+/* Render the boot menu and take a selection. A non-TTY stdin takes the
+ * default without blocking. Returns the chosen index, or -1 on error. */
+int boot_manager_menu_run(const struct boot_manager_config *cfg, int timeout_s,
+                          char *chosen_id, size_t chosen_len);
+
+/* Entry id at an index, or NULL. */
+const char *boot_manager_choice(const struct boot_manager_config *cfg, int index);
+
 #endif /* OSB_BOOT_H */

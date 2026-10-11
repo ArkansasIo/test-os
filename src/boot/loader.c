@@ -417,6 +417,244 @@ int loader_load_kernel(struct loader *l, int index, u8 *dest, size_t destlen)
     return (int)n;
 }
 
+/* ===========================================================================
+ * Boot manager text interface
+ *
+ * The boot menu the loader renders before the kernel is loaded. It is driven
+ * by the same INI-ish loader config that loader_load_config() already parses
+ * (os/loader.conf), so a checkout without that file still comes up on the
+ * built-in entry list.
+ * ========================================================================= */
+
+const char *boot_manager_kind_name(enum boot_manager_kind k)
+{
+    switch (k)
+    {
+    case BOOT_MGR_FLOPPY:
+        return "floppy";
+    case BOOT_MGR_DISK:
+        return "disk";
+    case BOOT_MGR_NET:
+        return "net";
+    case BOOT_MGR_RESCUE:
+        return "rescue";
+    case BOOT_MGR_MEMTEST:
+        return "memtest";
+    }
+    return "unknown";
+}
+
+static enum boot_manager_kind mgr_kind_from_loader(enum loader_kind k)
+{
+    switch (k)
+    {
+    case LOADER_FLOPPY:
+        return BOOT_MGR_FLOPPY;
+    case LOADER_NET:
+        return BOOT_MGR_NET;
+    case LOADER_RESCUE:
+        return BOOT_MGR_RESCUE;
+    case LOADER_MEMTEST:
+        return BOOT_MGR_MEMTEST;
+    case LOADER_DISK:
+        break;
+    }
+    return BOOT_MGR_DISK;
+}
+
+int boot_manager_defaults(struct boot_manager_config *cfg)
+{
+    if (cfg == NULL)
+        return OSB_EBADARG;
+
+    memset(cfg, 0, sizeof(*cfg));
+    snprintf(cfg->title, sizeof(cfg->title), "%s", BOOT_MANAGER_DEFAULT_TITLE);
+    cfg->default_index = 0;
+    cfg->timeout_s = 5;
+    cfg->count = 0;
+
+    /* The fallback list: the same four entries the loader seeds, so the menu
+     * is never empty even with no os/loader.conf on disk. */
+    {
+        static const struct
+        {
+            const char *id;
+            const char *label;
+            const char *version;
+            const char *cmdline;
+            enum boot_manager_kind kind;
+        } builtin[] = {
+            {"osborne", "Osborne Desktop (CP/M 2.2)", "2.2",
+             "root=/dev/fd0 runlevel=5 target=desktop", BOOT_MGR_FLOPPY},
+            {"server", "Osborne Server (headless + VNC)", "2.2",
+             "root=/dev/fd0 runlevel=6 target=server", BOOT_MGR_DISK},
+            {"rescue", "Recovery Shell (single user)", "2.2",
+             "root=/dev/fd0 runlevel=1 target=rescue", BOOT_MGR_RESCUE},
+            {"memtest", "Memory Test (64 KB)", "",
+             "memtest", BOOT_MGR_MEMTEST},
+        };
+        size_t i;
+
+        for (i = 0; i < sizeof(builtin) / sizeof(builtin[0]); i++)
+        {
+            struct boot_manager_entry *e = &cfg->entries[cfg->count++];
+
+            snprintf(e->id, sizeof(e->id), "%s", builtin[i].id);
+            snprintf(e->label, sizeof(e->label), "%s", builtin[i].label);
+            snprintf(e->version, sizeof(e->version), "%s", builtin[i].version);
+            snprintf(e->cmdline, sizeof(e->cmdline), "%s", builtin[i].cmdline);
+            e->kind = builtin[i].kind;
+            e->enabled = 1;
+        }
+    }
+    return OSB_OK;
+}
+
+/* Merge one loader entry into the manager entry list, if it is not already
+ * present (a config that repeats an id keeps the first definition). */
+static void mgr_append(struct boot_manager_config *cfg, const struct loader_entry *e)
+{
+    struct boot_manager_entry *m;
+
+    if (cfg == NULL || e == NULL || !e->enabled)
+        return;
+    if (cfg->count >= BOOT_MANAGER_MAX_ENTRIES)
+        return;
+
+    m = &cfg->entries[cfg->count];
+    snprintf(m->id, sizeof(m->id), "%s", e->id);
+    snprintf(m->label, sizeof(m->label), "%s", e->label);
+    snprintf(m->cmdline, sizeof(m->cmdline), "%s", e->cmdline ? e->cmdline : "");
+    m->kind = mgr_kind_from_loader(e->kind);
+    m->enabled = e->enabled;
+    m->version[0] = '\0';
+    cfg->count++;
+}
+
+int boot_manager_config(struct boot_manager_config *cfg, const char *path)
+{
+    struct loader *l;
+    struct loader_entry *entries;
+    int count = 0, i;
+
+    if (cfg == NULL)
+        return OSB_EBADARG;
+
+    boot_manager_defaults(cfg);
+
+    l = loader_create();
+    if (l == NULL)
+        return OSB_ENOMEM;
+
+    if (loader_load_config(l, path) != OSB_OK)
+    {
+        loader_destroy(l);
+        return OSB_OK; /* the built-in list already stands in */
+    }
+
+    /* Replace, rather than extend, the built-ins with the config entries. */
+    entries = loader_entries(l, &count);
+    if (count > 0)
+    {
+        cfg->count = 0;
+        for (i = 0; i < count; i++)
+            mgr_append(cfg, &entries[i]);
+    }
+
+    if (count > 0 && l->default_index >= 0 && l->default_index < cfg->count)
+        cfg->default_index = l->default_index;
+    if (l->timeout_ms > 0)
+        cfg->timeout_s = l->timeout_ms / 1000;
+
+    loader_destroy(l);
+    return OSB_OK;
+}
+
+int boot_manager_find(const struct boot_manager_config *cfg, const char *id)
+{
+    int i;
+
+    if (cfg == NULL || id == NULL)
+        return -1;
+    for (i = 0; i < cfg->count; i++)
+        if (osb_streq(cfg->entries[i].id, id))
+            return i;
+    return -1;
+}
+
+int boot_manager_menu_run(const struct boot_manager_config *cfg, int timeout_s,
+                          char *chosen_id, size_t chosen_len)
+{
+    int i, selected;
+
+    if (cfg == NULL || cfg->count == 0)
+        return -1;
+
+    selected = cfg->default_index;
+    if (selected < 0 || selected >= cfg->count)
+        selected = 0;
+
+    printf("\n  %s\n", cfg->title);
+    printf("  ----------------------------------------------------------\n");
+    for (i = 0; i < cfg->count; i++)
+    {
+        const struct boot_manager_entry *e = &cfg->entries[i];
+
+        printf("  %c %2d. %-38s [%s]%s%s\n",
+               i == selected ? '>' : ' ', i + 1, e->label,
+               boot_manager_kind_name(e->kind),
+               e->version[0] ? "  v" : "", e->version);
+    }
+    printf("  ----------------------------------------------------------\n");
+
+    if (selected == cfg->default_index && timeout_s > 0)
+        printf("  Booting \"%s\" in %d seconds...\n",
+               cfg->entries[selected].label, timeout_s);
+
+    /* A pipe, a script or CI cannot answer: take the default. */
+    if (!isatty_compat())
+    {
+        if (chosen_id && chosen_len)
+            snprintf(chosen_id, chosen_len, "%s", cfg->entries[selected].id);
+        return selected;
+    }
+
+    printf("  > ");
+    fflush(stdout);
+    {
+        char buf[32];
+
+        if (fgets(buf, sizeof(buf), stdin) != NULL)
+        {
+            int want = atoi(buf);
+
+            trim(buf);
+            if (want >= 1 && want <= cfg->count)
+            {
+                selected = want - 1;
+            }
+            else if (buf[0])
+            {
+                int f = boot_manager_find(cfg, buf);
+
+                if (f >= 0)
+                    selected = f;
+            }
+        }
+    }
+
+    if (chosen_id && chosen_len)
+        snprintf(chosen_id, chosen_len, "%s", cfg->entries[selected].id);
+    return selected;
+}
+
+const char *boot_manager_choice(const struct boot_manager_config *cfg, int index)
+{
+    if (cfg == NULL || index < 0 || index >= cfg->count)
+        return NULL;
+    return cfg->entries[index].id;
+}
+
 /* ---------------------------------------------------------------------------
  * Boot options: seed the defaults the boot manager runs with.
  *

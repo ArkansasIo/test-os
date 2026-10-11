@@ -86,4 +86,42 @@ void login_screen_goodbye(struct screen *s, const char *user, const char *reason
 void screen_panel(struct screen *s, const char *left, const char *right, int attr);
 void screen_statusbar(struct screen *s, const char *text, int attr);
 
+/* --- Full-screen loading sequence ------------------------------------- */
+/* The startup screen that runs between the loader and the session: a titled
+ * box, a [===>      ] nn% bar, one [ ok ] line per subsystem, a spinner and a
+ * progress / kernel / login readout. Unlike the step-at-a-time `loading`
+ * screen above, this one is a single frame repainted from a percentage, so it
+ * also renders headless. It is implemented in src/screen/loading.c. */
+struct loading_screen;
+
+enum loading_stage
+{
+    LOAD_KERNEL = 0,
+    LOAD_MODULES,
+    LOAD_DISKS,
+    LOAD_NETWORK,
+    LOAD_DESKTOP,
+    LOAD_COUNT
+};
+
+struct loading_screen *loading_screen_create(struct screen *s, const char *title);
+void loading_screen_destroy(struct loading_screen *ls);
+
+/* Set the operator-visible title (the loader "picks" this along with an OS). */
+void loading_screen_title(struct loading_screen *ls, const char *title);
+
+/* Mark one boot subsystem done, with the detail line shown next to it. */
+void loading_screen_stage(struct loading_screen *ls, enum loading_stage stage,
+                          const char *detail);
+
+/* Percentage 0..100; repaints the bar and updates the derived counters. */
+void loading_screen_set_progress(struct loading_screen *ls, int percent);
+void loading_screen_set_detail(struct loading_screen *ls, const char *line);
+void loading_screen_spinner(struct loading_screen *ls);
+void loading_screen_paint(struct loading_screen *ls);
+void loading_screen_done(struct loading_screen *ls, int ok, const char *message);
+
+int loading_screen_percent(const struct loading_screen *ls);
+const char *loading_screen_stage_name(enum loading_stage stage);
+
 #endif /* OSB_SCREEN_H */

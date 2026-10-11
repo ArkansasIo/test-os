@@ -46,9 +46,12 @@ SRC := \
 	src/login/logout.c \
 	src/boot/loader.c \
 	src/boot/init.c \
+	src/boot/textui.c \
 	src/screen/screen.c \
+	src/screen/loading.c \
 	src/menus/menu.c \
 	src/modules/module.c \
+	src/gui/api.c \
 	src/sound/sound.c \
 	src/frontend/main.c
 
@@ -58,7 +61,8 @@ OBJ := $(SRC:src/%.c=$(BUILD)/%.o)
 
 all: dirs $(BIN)
 
-DIRS := muthur login boot screen menus modules sound frontend
+DIRS := muthur login boot screen menus modules gui sound frontend
+# Every build/<dir> the object files above need (textui -> boot, loading -> screen).
 
 ifeq ($(OS),Windows_NT)
 # cmd's mkdir takes one path and errors if it already exists, so every call is
@@ -72,6 +76,7 @@ dirs:
 	@if not exist $(BUILD)\screen mkdir $(BUILD)\screen
 	@if not exist $(BUILD)\menus mkdir $(BUILD)\menus
 	@if not exist $(BUILD)\modules mkdir $(BUILD)\modules
+	@if not exist $(BUILD)\gui mkdir $(BUILD)\gui
 	@if not exist $(BUILD)\sound mkdir $(BUILD)\sound
 	@if not exist $(BUILD)\frontend mkdir $(BUILD)\frontend
 else

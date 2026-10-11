@@ -29,6 +29,7 @@
 #include "muthur.h"
 #include "screen.h"
 #include "sound.h"
+#include "textui.h"
 #include "types.h"
 
 /* The session the operator asked for, decided before anything starts. */
@@ -45,6 +46,8 @@ struct frontend_opts
     int sound_demo;
     int sound_test;
     int printer_demo;
+    int boot_menu;   /* --boot-menu : the loader text menu + linux handoff */
+    int show_textui; /* --textui    : dump every boot screen and exit */
     const char *boot_file;
     const char *user;
 };
@@ -64,6 +67,8 @@ static void usage(const char *argv0)
     printf("  --sound-demo     render the 2600 Hz tone and Pong effects to .wav\n");
     printf("  --printer-demo   render the printer (dot-matrix) effects to .wav\n");
     printf("  --sound-test     verify the tone generator, then exit\n");
+    printf("  --boot-menu      show the Linux boot loader menu, then hand off\n");
+    printf("  --textui         dump every boot text screen (loader -> login)\n");
     printf("  -h, --help       this text\n\n");
     printf("Without a session option the front end boots the machine and\n");
     printf("presents the login prompt.\n");
@@ -164,6 +169,14 @@ static int parse_args(int argc, char **argv, struct frontend_opts *o)
         else if (osb_streq(a, "--printer-demo"))
         {
             o->printer_demo = 1;
+        }
+        else if (osb_streq(a, "--boot-menu"))
+        {
+            o->boot_menu = 1;
+        }
+        else if (osb_streq(a, "--textui"))
+        {
+            o->show_textui = 1;
         }
         else if (a[0] == '-' && a[1] != '\0')
         {
@@ -523,6 +536,122 @@ static int run_sound_test(void)
     return fails ? OSB_ERR : OSB_OK;
 }
 
+/* ---- Boot text interface --------------------------------------------- */
+
+static void textui_frame(struct textui_screen *s)
+{
+    struct textui_terminal t = {1, 0};
+
+    textui_flush(s, &t);
+}
+
+/* The Linux boot loader menu (the GRUB screen) and the kernel handoff banner.
+ * A non-TTY stdin (a pipe, a script, make) takes the default entry, so this
+ * target is safe to run unattended. */
+static int run_boot_menu(void)
+{
+    struct boot_manager_config cfg;
+    struct textui_screen *s;
+    char chosen[16];
+    int sel;
+
+    if (boot_manager_config(&cfg, NULL) != OSB_OK)
+        return OSB_ERR;
+
+    s = calloc(1, sizeof(*s));
+    if (s == NULL)
+        return OSB_ENOMEM;
+
+    textui_screen_init(s);
+    sel = textui_grub_selected(&cfg);
+
+    printf("osborne1: boot loader - %d entry(ies), default \"%s\"\n\n",
+           cfg.count,
+           (sel >= 0 && sel < cfg.count) ? cfg.entries[sel].label : "?");
+
+    textui_grub_menu(s, &cfg, sel, cfg.timeout_s);
+    textui_frame(s);
+
+    printf("\n");
+    textui_grub_edit(s, &cfg, sel < 0 ? 0 : sel, 1);
+    textui_frame(s);
+
+    printf("\n");
+    textui_linux_init(s);
+    textui_frame(s);
+
+    /* The menu run consumes the countdown/selection when stdin is a TTY and
+     * falls back to the default otherwise; either way the entry is echo-free. */
+    sel = boot_manager_menu_run(&cfg, cfg.timeout_s, chosen, sizeof(chosen));
+    printf("\nosborne1: booting \"%s\" (%s)\n", chosen,
+           boot_manager_choice(&cfg, sel));
+
+    free(s);
+    return OSB_OK;
+}
+
+/* Dump every boot text screen without a machine, so the layout can be
+ * inspected headlessly: loader menu, editor, kernel handoff, login, menu tree. */
+static int run_textui_dump(void)
+{
+    struct boot_manager_config cfg;
+    struct textui_screen *s;
+    struct menu *m;
+    int sel;
+
+    s = calloc(1, sizeof(*s));
+    if (s == NULL)
+        return OSB_ENOMEM;
+    textui_screen_init(s);
+
+    if (boot_manager_config(&cfg, NULL) != OSB_OK)
+    {
+        free(s);
+        return OSB_ERR;
+    }
+    sel = textui_grub_selected(&cfg);
+
+    printf("osborne1: textui - boot loader menu\n\n");
+    textui_grub_menu(s, &cfg, sel, cfg.timeout_s);
+    textui_frame(s);
+
+    printf("\nosborne1: textui - entry editor\n\n");
+    textui_grub_edit(s, &cfg, sel < 0 ? 0 : sel, 1);
+    textui_frame(s);
+
+    printf("\nosborne1: textui - kernel handoff (%d lines)\n\n",
+           textui_linux_init_lines());
+    textui_linux_init(s);
+    textui_frame(s);
+
+    printf("\nosborne1: textui - login banner\n\n");
+    textui_login_banner(s, "osborne1", "tty1");
+    textui_frame(s);
+
+    printf("\nosborne1: textui - login box\n\n");
+    textui_login_box(s, "osborne1");
+    textui_login_prompt(s, "login:", "guest", 0);
+    textui_frame(s);
+
+    m = menu_create();
+    if (m != NULL && menu_load_default(m) == OSB_OK)
+    {
+        printf("\nosborne1: textui - desktop menu tree\n\n");
+        {
+            int path[MENU_MAX_DEPTH];
+
+            path[0] = m->root;
+            textui_menu_render_header(s, m, m->root, path, 1);
+            textui_menu_render(s, m, 0, 1, 3, 3, 44);
+            textui_frame(s);
+        }
+    }
+    menu_destroy(m);
+
+    free(s);
+    return OSB_OK;
+}
+
 int main(int argc, char **argv)
 {
     struct frontend_opts o;
@@ -556,6 +685,10 @@ int main(int argc, char **argv)
         return run_sound_demo() == OSB_OK ? OSB_OK : OSB_ERR;
     if (o.printer_demo)
         return run_printer_demo() == OSB_OK ? OSB_OK : OSB_ERR;
+    if (o.show_textui)
+        return run_textui_dump() == OSB_OK ? OSB_OK : OSB_ERR;
+    if (o.boot_menu)
+        return run_boot_menu() == OSB_OK ? OSB_OK : OSB_ERR;
 
     if (bring_up(&o) != OSB_OK)
         return OSB_ERR;

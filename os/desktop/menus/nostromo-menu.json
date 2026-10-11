@@ -1,0 +1,361 @@
+{
+  "id": "nostromo",
+  "title": "USCSS NOSTROMO — Interface 2037",
+  "items": [
+    {
+      "id": "muthur",
+      "label": "MU/TH/UR 6000",
+      "icon": "terminal",
+      "submenu": {
+        "id": "muthur",
+        "items": [
+          {
+            "id": "muthur-console",
+            "label": "Console",
+            "icon": "terminal",
+            "action": "launch:osborne1 --muthur"
+          },
+          {
+            "id": "muthur-interrogate",
+            "label": "Interrogative Mode",
+            "icon": "terminal",
+            "action": "muthur:query"
+          },
+          {
+            "id": "muthur-status",
+            "label": "Ship Status Report",
+            "icon": "info",
+            "action": "muthur:status"
+          },
+          {
+            "id": "muthur-crew",
+            "label": "Crew Manifest",
+            "icon": "user",
+            "action": "muthur:crew"
+          },
+          {
+            "id": "muthur-special-order",
+            "label": "Special Order 937",
+            "icon": "lock",
+            "action": "muthur:special-order"
+          },
+          {
+            "id": "muthur-self-destruct",
+            "label": "Self Destruct",
+            "icon": "power",
+            "action": "muthur:self-destruct"
+          }
+        ]
+      }
+    },
+    {
+      "id": "science",
+      "label": "Science Station",
+      "icon": "code",
+      "submenu": {
+        "id": "science",
+        "items": [
+          {
+            "id": "science-analyzer",
+            "label": "Micro-Analyzer",
+            "action": "launch:osborne1 --muthur"
+          },
+          {
+            "id": "science-lifeform",
+            "label": "Lifeform Analysis",
+            "action": "science:lifeform"
+          },
+          {
+            "id": "science-specimen",
+            "label": "Specimen Scan",
+            "action": "science:specimen"
+          },
+          {
+            "id": "science-transmission",
+            "label": "Transmission Decode",
+            "action": "science:transmission"
+          },
+          {
+            "id": "science-ash-diagnostic",
+            "label": "Ash — Diagnostics",
+            "icon": "lock",
+            "action": "science:ash-diagnostic"
+          }
+        ]
+      }
+    },
+    {
+      "id": "navigation",
+      "label": "Navigation",
+      "icon": "gear",
+      "submenu": {
+        "id": "navigation",
+        "items": [
+          {
+            "id": "nav-course",
+            "label": "Course Plotter",
+            "action": "nav:course"
+          },
+          {
+            "id": "nav-eta",
+            "label": "ETA to Earth",
+            "action": "muthur:eta"
+          },
+          {
+            "id": "nav-asteroid",
+            "label": "Zeta II Reticuli Approach",
+            "action": "nav:zeta2"
+          },
+          {
+            "id": "nav-drift",
+            "label": "Drift Check",
+            "action": "nav:drift"
+          },
+          {
+            "id": "nav-beacon",
+            "label": "Beacon Tracking",
+            "action": "nav:beacon"
+          }
+        ]
+      }
+    },
+    {
+      "id": "engineering",
+      "label": "Engineering",
+      "icon": "gear",
+      "submenu": {
+        "id": "engineering",
+        "items": [
+          {
+            "id": "eng-life-support",
+            "label": "Life Support",
+            "action": "muthur:life-support"
+          },
+          {
+            "id": "eng-airscrub",
+            "label": "Air Scrubbers",
+            "action": "eng:airscrub"
+          },
+          {
+            "id": "eng-power",
+            "label": "Power Distribution",
+            "action": "eng:power"
+          },
+          {
+            "id": "eng-coolant",
+            "label": "Coolant Loop",
+            "action": "eng:coolant"
+          },
+          {
+            "id": "eng-waldo",
+            "label": "Remote Waldo Arm",
+            "action": "eng:waldo"
+          },
+          {
+            "id": "eng-airlock",
+            "label": "Airlock Control",
+            "icon": "power",
+            "submenu": {
+              "id": "eng-airlock",
+              "items": [
+                {
+                  "id": "airlock-dock",
+                  "label": "Docking Bay",
+                  "action": "airlock:dock"
+                },
+                {
+                  "id": "airlock-purge",
+                  "label": "Purge Bay",
+                  "action": "airlock:purge"
+                },
+                {
+                  "id": "airlock-hold",
+                  "label": "Hold Bay",
+                  "action": "airlock:hold"
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "id": "communications",
+      "label": "Communications",
+      "icon": "server",
+      "submenu": {
+        "id": "communications",
+        "items": [
+          {
+            "id": "comms-transmit",
+            "label": "Send Transmission",
+            "action": "comms:transmit"
+          },
+          {
+            "id": "comms-log",
+            "label": "Message Log",
+            "action": "comms:log"
+          },
+          {
+            "id": "comms-weyland",
+            "label": "Weyland-Yutani Link",
+            "action": "comms:weyland"
+          },
+          {
+            "id": "comms-distress",
+            "label": "Distress Beacon",
+            "action": "comms:distress"
+          }
+        ]
+      }
+    },
+    {
+      "id": "files",
+      "label": "Ship's Files",
+      "icon": "folder",
+      "submenu": {
+        "id": "files",
+        "items": [
+          {
+            "id": "files-browse",
+            "label": "CP/M Drive A:",
+            "icon": "folder",
+            "action": "launch:osborne1 --menu"
+          },
+          {
+            "id": "files-crew-log",
+            "label": "Crew Log",
+            "action": "files:crew-log"
+          },
+          {
+            "id": "files-manifest",
+            "label": "Cargo Manifest",
+            "action": "files:manifest"
+          },
+          {
+            "id": "files-order937",
+            "label": "Order 937 (sealed)",
+            "icon": "lock",
+            "action": "files:order937"
+          },
+          {
+            "id": "files-print",
+            "label": "Print Crew Log",
+            "icon": "printer",
+            "action": "print:crews.log"
+          }
+        ]
+      }
+    },
+    {
+      "id": "cpm",
+      "label": "CP/M 2.2",
+      "icon": "terminal",
+      "submenu": {
+        "id": "cpm",
+        "items": [
+          {
+            "id": "cpm-boot",
+            "label": "Boot Disk",
+            "action": "launch:osborne1 --disk A:boot.cpm"
+          },
+          {
+            "id": "cpm-mbasic",
+            "label": "MBASIC",
+            "action": "launch:mbasic"
+          },
+          {
+            "id": "cpm-stat",
+            "label": "STAT",
+            "action": "launch:stat"
+          },
+          {
+            "id": "cpm-pip",
+            "label": "PIP",
+            "action": "launch:pip"
+          },
+          {
+            "id": "cpm-submit",
+            "label": "SUBMIT",
+            "action": "launch:submit"
+          }
+        ]
+      }
+    },
+    {
+      "id": "modules",
+      "label": "Modules",
+      "icon": "code",
+      "submenu": {
+        "id": "modules",
+        "items": [
+          {
+            "id": "mod-list",
+            "label": "List Modules",
+            "action": "modules:list"
+          },
+          {
+            "id": "mod-load",
+            "label": "Load All",
+            "action": "modules:load-all"
+          },
+          {
+            "id": "mod-unload",
+            "label": "Unload All",
+            "action": "modules:unload-all"
+          },
+          {
+            "id": "mod-muthur6000",
+            "label": "MU/TH/UR 6000",
+            "action": "modules:muthur-6000" },
+          {
+            "id": "mod-ash",
+            "label": "Science Officer",
+            "action": "modules:load science"
+          }
+        ]
+      }
+    },
+    {
+      "id": "session",
+      "label": "Session",
+      "icon": "user",
+      "submenu": {
+        "id": "session",
+        "items": [
+          {
+            "id": "ses-switch",
+            "label": "Switch Crew Member",
+            "action": "logout:switch"
+          },
+          {
+            "id": "ses-lock",
+            "label": "Lock Console",
+            "action": "os-desktop lock"
+          },
+          {
+            "id": "ses-logout",
+            "label": "Log Out",
+            "action": "logout:user"
+          },
+          {
+            "id": "ses-reboot",
+            "label": "Reboot",
+            "action": "systemctl reboot"
+          },
+          {
+            "id": "ses-shutdown",
+            "label": "Shut Down",
+            "action": "systemctl poweroff"
+          }
+        ]
+      }
+    },
+    {
+      "id": "help",
+      "label": "Help",
+      "icon": "help",
+      "action": "launch:os-help"
+    }
+  ]
+}
