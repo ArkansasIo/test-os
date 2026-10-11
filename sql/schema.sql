@@ -1,4 +1,3 @@
-and systems
 -- ---------------------------------------------------------------------------
 -- osborne1-cpm : MySQL schema
 -- Persistence layer for the CP/M filesystem (drives, directory entries, blocks)

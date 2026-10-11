@@ -1,0 +1,31 @@
+name: C build and tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Install compiler and build tools
+        run: sudo apt-get update && sudo apt-get install -y build-essential python3
+      - name: Validate repository structure and SQL headers
+        run: python3 tests/check_repository.py
+      - name: Build with warnings enabled
+        run: make clean all
+      - name: Run project tests
+        run: make test
+      - name: Run CLI smoke tests
+        run: |
+          ./build/osborne1 --help
+          ./build/osborne1 --menu --script
+          ./build/osborne1 --textui

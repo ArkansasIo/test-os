@@ -1,4 +1,3 @@
- pushtogithub-- ---------------------------------------------------------------------------
 -- osborne1-cpm : MySQL schema — desktop GUI API
 --
 -- Persists the surface described by include/gui.h:
