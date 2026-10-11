@@ -29,3 +29,4 @@ jobs:
           ./build/osborne1 --help
           ./build/osborne1 --menu --script
           ./build/osborne1 --textui
+          ./build/osborne1 --boot-sequence </dev/null
