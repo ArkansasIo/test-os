@@ -1,0 +1,3 @@
+# Kbuild composite module: multiple C translation units, one loadable module.
+obj-m += aetheros_nexus.o
+aetheros_nexus-y := aetheros_main.o banner.o identity.o proc.o
