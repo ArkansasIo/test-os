@@ -1,24 +1,29 @@
-# AetherOS Nexus boot / login UI
+# AetherOS Nexus — native C terminal screen
 
-A standalone responsive front-end prototype inspired by the supplied Linux login-screen reference. It gives the OS a new name, **AetherOS Nexus**, and an original star-compass logo.
+The AetherOS Nexus boot/login concept is implemented in C using the repository's existing 80×24 terminal cell buffer and ANSI-capable output.
 
-## Files
-- `index.html` — semantic boot/login screen markup and controls.
-- `styles.css` — responsive glass panels, planetary background, typography, progress bar, and reduced-motion support.
-- `app.js` — clock, simulated POST sequence, progress state, session selector, and safe demo button interactions.
-- `assets/aetheros-mark.svg` — original vector logo and favicon.
-- `TESTING.md` — manual smoke-test checklist.
+## Source files
 
-## Run
-Open `index.html` in a modern browser, or serve the repository root:
+- `include/aetheros.h` — public renderer declaration.
+- `src/boot/aetheros.c` — logo, branding, system POST panel, diagnostic rows, and login mockup.
+- `src/frontend/main.c` — command-line option and dispatcher.
+- `Makefile` — compiles the renderer into the existing executable.
+- `tests/check_repository.py` — validates that the C renderer, public header, build integration, and CLI option exist.
+
+## Build and run
 
 ```sh
-python3 -m http.server 8000
+make clean all
+./build/osborne1 --aetheros-screen
 ```
 
-Then visit `http://localhost:8000/ui/aetheros-boot/`.
+Headless smoke run:
 
-## Important limitations
-This is a **visual prototype**, not a Linux display manager, firmware interface, or kernel bootloader. POST results and progress are simulated. Login does not authenticate users, and shutdown/restart buttons do not control the host computer. Do not enter a real password.
+```sh
+./build/osborne1 --aetheros-screen </dev/null
+python3 tests/check_repository.py
+```
 
-The background is drawn with CSS gradients and shapes, so the prototype has no binary image dependencies or external image hosting.
+## Scope and safety
+
+This is a terminal mockup, not a graphical display manager. Hardware POST results are illustrative. It does not collect passwords, authenticate accounts, power off the host, or load a real Linux kernel.
