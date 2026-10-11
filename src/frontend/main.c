@@ -22,6 +22,7 @@
 #include <stdlib.h>
 
 #include "boot.h"
+#include "aetheros.h"
 #include "login.h"
 #include "machine.h"
 #include "menu.h"
@@ -48,6 +49,7 @@ struct frontend_opts
     int printer_demo;
     int boot_menu;   /* --boot-menu : the loader text menu + linux handoff */
     int boot_sequence; /* --boot-sequence : POST -> loader -> loading -> handoff */
+    int aetheros_screen; /* --aetheros-screen : native C AetherOS terminal UI */
     int show_textui; /* --textui    : dump every boot screen and exit */
     const char *boot_file;
     const char *user;
