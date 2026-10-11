@@ -30,3 +30,4 @@ jobs:
           ./build/osborne1 --menu --script
           ./build/osborne1 --textui
           ./build/osborne1 --boot-sequence </dev/null
+          ./build/osborne1 --aetheros-screen </dev/null
