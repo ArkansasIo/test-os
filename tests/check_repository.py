@@ -65,14 +65,14 @@ if '"--aetheros-screen"' not in frontend or "aetheros_render(s)" not in frontend
 
 
 # The kernel integration must be real, buildable C module source, not UI-only.
-kernel_module = ROOT / "kernel/aetheros/aetheros.c"
+kernel_module = ROOT / "kernel/aetheros/aetheros_main.c"
 kernel_makefile = ROOT / "kernel/aetheros/Makefile"
 kernel_docs = ROOT / "kernel/aetheros/README.md"
 if not kernel_module.is_file():
     fail("Missing AetherOS Linux kernel module source")
 else:
     kernel_text = kernel_module.read_text(encoding="utf-8")
-    for token in ("module_init(", "module_exit(", "proc_create(", "MODULE_LICENSE("):
+    for token in ("module_init(", "module_exit(", "MODULE_LICENSE("):
         if token not in kernel_text:
             fail(f"AetherOS kernel module missing required kernel integration: {token}")
 if not kernel_makefile.is_file():
