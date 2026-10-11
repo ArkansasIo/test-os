@@ -79,6 +79,9 @@ void textui_box(struct textui_screen *s, int top, int left, int bottom, int righ
 /* Flush the whole 80x24 frame through `t` to stdout (one write per row). */
 void textui_flush(const struct textui_screen *s, const struct textui_terminal *t);
 
+/* --- Firmware POST / boot loader menu ------------------------------- */
+void textui_post_screen(struct textui_screen *s);
+
 /* --- Boot loader menu (the GRUB screen) ------------------------------- */
 
 void textui_grub_menu(struct textui_screen *s, const struct boot_manager_config *cfg,

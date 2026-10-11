@@ -47,6 +47,7 @@ struct frontend_opts
     int sound_test;
     int printer_demo;
     int boot_menu;   /* --boot-menu : the loader text menu + linux handoff */
+    int boot_sequence; /* --boot-sequence : POST -> loader -> loading -> handoff */
     int show_textui; /* --textui    : dump every boot screen and exit */
     const char *boot_file;
     const char *user;
@@ -68,6 +69,7 @@ static void usage(const char *argv0)
     printf("  --printer-demo   render the printer (dot-matrix) effects to .wav\n");
     printf("  --sound-test     verify the tone generator, then exit\n");
     printf("  --boot-menu      show the Linux boot loader menu, then hand off\n");
+    printf("  --boot-sequence  show POST, loader, loading and kernel handoff screens\n");
     printf("  --textui         dump every boot text screen (loader -> login)\n");
     printf("  -h, --help       this text\n\n");
     printf("Without a session option the front end boots the machine and\n");
@@ -173,6 +175,10 @@ static int parse_args(int argc, char **argv, struct frontend_opts *o)
         else if (osb_streq(a, "--boot-menu"))
         {
             o->boot_menu = 1;
+        }
+        else if (osb_streq(a, "--boot-sequence"))
+        {
+            o->boot_sequence = 1;
         }
         else if (osb_streq(a, "--textui"))
         {
@@ -590,6 +596,94 @@ static int run_boot_menu(void)
     return OSB_OK;
 }
 
+
+/* Full visual boot path for UI development. Progress is explicitly simulated:
+ * this program models the boot experience; it does not execute a Linux kernel. */
+static int run_boot_sequence(void)
+{
+    struct boot_manager_config cfg;
+    struct textui_screen *frame;
+    struct screen *surface;
+    struct loading_screen *loading;
+    struct textui_terminal terminal = {1, 0};
+    char chosen[16] = "osborne";
+    int selected;
+
+    if (boot_manager_config(&cfg, NULL) != OSB_OK)
+        return OSB_ERR;
+
+    frame = calloc(1, sizeof(*frame));
+    if (frame == NULL)
+        return OSB_ENOMEM;
+    textui_screen_init(frame);
+
+    textui_post_screen(frame);
+    textui_flush(frame, &terminal);
+
+    selected = textui_grub_selected(&cfg);
+    textui_grub_menu(frame, &cfg, selected, cfg.timeout_s);
+    textui_flush(frame, &terminal);
+    selected = boot_manager_menu_run(&cfg, cfg.timeout_s, chosen, sizeof(chosen));
+    if (selected < 0 || selected >= cfg.count)
+    {
+        free(frame);
+        return OSB_ERR;
+    }
+
+    surface = screen_create();
+    if (surface == NULL)
+    {
+        free(frame);
+        return OSB_ENOMEM;
+    }
+    loading = loading_screen_create(surface, "LINUX KERNEL / INITRAMFS");
+    if (loading == NULL)
+    {
+        screen_destroy(surface);
+        free(frame);
+        return OSB_ENOMEM;
+    }
+
+    loading_screen_set_detail(loading, "Boot entry selected; preparing kernel handoff.");
+    loading_screen_set_progress(loading, 5);
+    loading_screen_paint(loading);
+
+    loading_screen_stage(loading, LOAD_KERNEL, "entry selected");
+    loading_screen_set_detail(loading, "Resolving kernel image and command line.");
+    loading_screen_set_progress(loading, 20);
+    loading_screen_paint(loading);
+
+    loading_screen_stage(loading, LOAD_MODULES, "initramfs table ready");
+    loading_screen_set_detail(loading, "Preparing platform and initramfs modules.");
+    loading_screen_set_progress(loading, 45);
+    loading_screen_paint(loading);
+
+    loading_screen_stage(loading, LOAD_DISKS, "root device mapped");
+    loading_screen_set_detail(loading, "Mapping virtual root device.");
+    loading_screen_set_progress(loading, 70);
+    loading_screen_paint(loading);
+
+    loading_screen_stage(loading, LOAD_NETWORK, "target configured");
+    loading_screen_set_detail(loading, "Applying selected boot target.");
+    loading_screen_set_progress(loading, 85);
+    loading_screen_paint(loading);
+
+    loading_screen_stage(loading, LOAD_DESKTOP, "userspace ready");
+    loading_screen_set_detail(loading, "Simulation complete; rendering kernel handoff.");
+    loading_screen_set_progress(loading, 100);
+    loading_screen_done(loading, 1, "BOOT SEQUENCE COMPLETE - SIMULATED HANDOFF");
+
+    textui_linux_init(frame);
+    textui_flush(frame, &terminal);
+    printf("\nBoot target: %s | command line: %s\n",
+           cfg.entries[selected].label, cfg.entries[selected].cmdline);
+
+    loading_screen_destroy(loading);
+    screen_destroy(surface);
+    free(frame);
+    return OSB_OK;
+}
+
 /* Dump every boot text screen without a machine, so the layout can be
  * inspected headlessly: loader menu, editor, kernel handoff, login, menu tree. */
 static int run_textui_dump(void)
@@ -687,6 +781,8 @@ int main(int argc, char **argv)
         return run_printer_demo() == OSB_OK ? OSB_OK : OSB_ERR;
     if (o.show_textui)
         return run_textui_dump() == OSB_OK ? OSB_OK : OSB_ERR;
+    if (o.boot_sequence)
+        return run_boot_sequence() == OSB_OK ? OSB_OK : OSB_ERR;
     if (o.boot_menu)
         return run_boot_menu() == OSB_OK ? OSB_OK : OSB_ERR;
 

@@ -31,6 +31,19 @@ for source in (ROOT / "src").rglob("*.c"):
         if not local.is_file() and not shared.is_file():
             fail(f"{source.relative_to(ROOT)} includes missing header {header}")
 
+# Boot UI surfaces must be wired into the public header and CLI.
+textui_header = (ROOT / "include/textui.h").read_text(encoding="utf-8")
+textui_source = (ROOT / "src/boot/textui.c").read_text(encoding="utf-8")
+frontend = (ROOT / "src/frontend/main.c").read_text(encoding="utf-8")
+for label, condition in (
+    ("POST declaration", "void textui_post_screen" in textui_header),
+    ("POST implementation", "void textui_post_screen" in textui_source),
+    ("boot-sequence option", '"--boot-sequence"' in frontend),
+    ("boot-sequence dispatcher", "run_boot_sequence(void)" in frontend),
+):
+    if not condition:
+        fail(f"Missing boot UI component: {label}")
+
 # Catch accidental editor/chat debris before SQL's first executable statement.
 allowed_starts = ("--", "/*", "CREATE ", "USE ", "INSERT ", "SET ")
 for sql in sorted((ROOT / "sql").rglob("*.sql")):

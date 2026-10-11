@@ -168,13 +168,14 @@ void screen_flush(struct screen *s)
     if (s == NULL)
         return;
 
-    printf("\033[H");
+    printf("\033[H\033[32m");
     for (r = 0; r < SCREEN_ROWS; r++) {
         /* only the leading attribute run is emitted; enough for a console */
         printf("%s", s->text[r]);
         if (r != SCREEN_ROWS - 1)
             printf("\n");
     }
+    printf("\033[0m");
     fflush(stdout);
     s->dirty = 0;
 }

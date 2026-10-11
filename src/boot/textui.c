@@ -420,6 +420,34 @@ void textui_flush(const struct textui_screen *s, const struct textui_terminal *t
 
 /* --- boot loader menu ------------------------------------------------- */
 
+
+/* Firmware POST screen: a fictional diagnostic pass for this emulator.
+ * This display does not probe physical hardware or execute a real BIOS. */
+void textui_post_screen(struct textui_screen *s)
+{
+    if (s == NULL)
+        return;
+
+    textui_clear(s);
+    textui_fill(s, 1, TUI_GREEN);
+    textui_center(s, 1, TUI_GREEN, "NOSTROMO / SYSTEM FIRMWARE");
+    textui_center(s, 2, TUI_GREEN, "POWER-ON SELF TEST  v0.9");
+    textui_box(s, 4, 5, 18, 74, TUI_GREEN);
+    textui_printf(s, 5, 8, TUI_GREEN, "HARDWARE DIAGNOSTICS");
+    textui_hline(s, 6, '-', TUI_GREEN);
+    textui_printf(s, 8, 8, TUI_GREEN, "[ PASS ] CPU  : Z80A-compatible emulation / 4.00 MHz");
+    textui_printf(s, 9, 8, TUI_GREEN, "[ PASS ] RAM  : 64 KB addressable memory");
+    textui_printf(s, 10, 8, TUI_GREEN, "[ PASS ] VIDEO: 80 x 24 monochrome CRT surface");
+    textui_printf(s, 11, 8, TUI_GREEN, "[ PASS ] KBD  : console input channel");
+    textui_printf(s, 12, 8, TUI_GREEN, "[ PASS ] FDC  : virtual floppy controller");
+    textui_printf(s, 13, 8, TUI_GREEN, "[ PASS ] ROM  : firmware fallback vector");
+    textui_printf(s, 15, 8, TUI_GREEN, "MEMORY TEST ............ 65536 bytes checked");
+    textui_printf(s, 16, 8, TUI_GREEN, "BOOT DEVICE ............ awaiting loader selection");
+    textui_printf(s, 20, 7, TUI_GREEN, "ALL REQUIRED CHECKS PASSED");
+    textui_center(s, 22, TUI_DIM, "Synthetic POST display - no physical hardware is probed");
+    textui_center(s, 23, TUI_GREEN, "INITIALIZING BOOT DEVICE ...");
+}
+
 int textui_grub_selected(const struct boot_manager_config *cfg)
 {
     if (cfg == NULL || cfg->count == 0)
