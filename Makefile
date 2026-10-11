@@ -47,6 +47,7 @@ SRC := \
 	src/boot/loader.c \
 	src/boot/init.c \
 	src/boot/textui.c \
+	src/boot/aetheros.c \
 	src/screen/screen.c \
 	src/screen/loading.c \
 	src/menus/menu.c \
