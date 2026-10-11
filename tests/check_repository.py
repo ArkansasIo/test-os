@@ -44,6 +44,25 @@ for label, condition in (
     if not condition:
         fail(f"Missing boot UI component: {label}")
 
+
+# AetherOS must remain a native C terminal implementation.
+aether_header = ROOT / "include/aetheros.h"
+aether_source = ROOT / "src/boot/aetheros.c"
+if not aether_header.is_file():
+    fail("Missing native AetherOS header")
+if not aether_source.is_file():
+    fail("Missing native AetherOS implementation")
+else:
+    aether_text = aether_source.read_text(encoding="utf-8")
+    if "void aetheros_render" not in aether_text:
+        fail("AetherOS renderer function is missing")
+    if "N E X U S" not in aether_text:
+        fail("AetherOS Nexus branding is missing")
+if "src/boot/aetheros.c" not in makefile:
+    fail("AetherOS C source is not included in Makefile")
+if '"--aetheros-screen"' not in frontend or "aetheros_render(s)" not in frontend:
+    fail("AetherOS screen is not wired to the native C CLI")
+
 # Catch accidental editor/chat debris before SQL's first executable statement.
 allowed_starts = ("--", "/*", "CREATE ", "USE ", "INSERT ", "SET ")
 for sql in sorted((ROOT / "sql").rglob("*.sql")):
