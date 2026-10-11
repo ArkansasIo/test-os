@@ -14,7 +14,7 @@ This directory is an out-of-tree Linux kernel module written in C. Unlike the te
 On a Linux host, install the development headers matching the running kernel and a C build toolchain, then run:
 
 ```sh
-./kernel/aetheros/build-module.sh
+sh kernel/aetheros/build-module.sh
 ```
 
 Equivalent command:
