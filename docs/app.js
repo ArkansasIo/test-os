@@ -1,20 +1,13 @@
-(function () {
-"use strict";
-const output=document.getElementById("terminal-output");
-const form=document.getElementById("terminal-form");
-const input=document.getElementById("terminal-input");
-const clear=document.getElementById("clear-console");
-const state=document.getElementById("console-state");
-const commands={
-help:()=>["Available demo commands:","  help       List available commands","  status     Show simulated system status","  version    Show project identity","  modules    List documented module groups","  memory     Show a simulated memory map","  clear      Clear the console output","  date       Show the browser's local date"],
-status:()=>["SYSTEM STATUS / SIMULATED","Web UI .............. ONLINE","Native host .......... NOT CONNECTED","Kernel module ........ NOT LOADED BY THIS SITE","Authentication ....... DISABLED","Mode ................ DEMONSTRATION"],
-version:()=>["AETHEROS NEXUS / OS LAB","Web console: 1.0.0","Native implementation: see repository main branch","Build target: C11 / GNU Make","The browser demo and native application are separate."],
-modules:()=>["DOCUMENTED COMPONENT GROUPS","boot      Boot screen and initialization concepts","login     User/session scaffolding","screen    Terminal rendering helpers","menus     Text menus and dispatch","modules   Module registry scaffold","sound     Tone/effect demonstration","kernel    Separate Linux loadable-module experiment"],
-memory:()=>["SIMULATED MEMORY MAP (illustrative only)","0x0000 - 0x3FFF  ROM / firmware concept","0x4000 - 0xBFFF  Application region concept","0xC000 - 0xFFFF  I/O and reserved concept","This is not a report of real or emulated RAM."],
-date:()=>["Browser local time: "+new Date().toString()]
-};
-function appendLine(text,className){const p=document.createElement("p");if(className)p.className=className;p.textContent=text;output.appendChild(p)}
-function run(raw){const command=raw.trim().toLowerCase();if(!command)return;appendLine("visitor@nexus:~$ "+raw,"muted");if(command==="clear"){output.replaceChildren();return}if(Object.prototype.hasOwnProperty.call(commands,command)){const result=commands[command]();result.forEach((line,index)=>appendLine(line,index===0&&command==="status"?"success":""))}else appendLine("Unknown demo command: "+command+" (type help)","error");output.scrollTop=output.scrollHeight}
-form.addEventListener("submit",function(event){event.preventDefault();run(input.value);input.value="";state.textContent="DEMO";input.focus()});
-clear.addEventListener("click",function(){output.replaceChildren();appendLine("Console cleared. Type help to get started.","muted");state.textContent="READY";input.focus()});
+(function(){"use strict";
+const boot=document.getElementById("boot"),os=document.getElementById("os"),start=document.getElementById("start"),menu=document.getElementById("start-menu"),clock=document.getElementById("clock"),output=document.getElementById("terminal-output"),form=document.getElementById("terminal-form"),input=document.getElementById("terminal-input");
+setTimeout(()=>{boot.classList.add("hidden");os.classList.remove("hidden");openApp("terminal")},2100);
+function append(text,cls){const p=document.createElement("p");p.textContent=text;if(cls)p.className=cls;output.appendChild(p);output.scrollTop=output.scrollHeight}
+const commands={help:["AETHEROS WEB OS COMMANDS","help      show commands","status    system status","version   OS version","apps      installed applications","clear     clear terminal","about     operating environment"],status:["SYSTEM STATUS","Desktop ........ ONLINE","Network ........ ONLINE","Kernel ......... WebOS Simulator 1.0","Security ....... Browser sandbox","Host access .... DISABLED"],version:["AETHEROS NEXUS 1.0.0","Architecture: browser desktop","Project: ArkansasIo/test-os"],apps:["APPLICATIONS","Terminal","File Manager","System Monitor","About AetherOS"],about:["AetherOS is an interactive browser OS interface for the test-os project.","Native host commands are intentionally unavailable from GitHub Pages."]};
+function run(raw){const c=raw.trim().toLowerCase();if(!c)return;append("user@aetheros:~$ "+raw,"muted");if(c==="clear"){output.replaceChildren();return}if(c==="date"){append(new Date().toString());return}if(commands[c])commands[c].forEach((x,i)=>append(x,i===0&&c==="status"?"success":""));else append("Command not found: "+c+". Type help.","error")}
+form.addEventListener("submit",e=>{e.preventDefault();run(input.value);input.value=""});
+function openApp(name){const el=document.getElementById(name+"-window");if(!el)return;document.querySelectorAll(".window").forEach(w=>w.classList.add("hidden"));el.classList.remove("hidden");menu.classList.add("hidden");if(name==="terminal")setTimeout(()=>input.focus(),30)}
+document.querySelectorAll("[data-app]").forEach(b=>b.addEventListener("click",()=>openApp(b.dataset.app)));
+start.addEventListener("click",e=>{e.stopPropagation();menu.classList.toggle("hidden")});document.addEventListener("click",e=>{if(!menu.contains(e.target)&&e.target!==start)menu.classList.add("hidden")});
+document.querySelectorAll(".close").forEach(b=>b.addEventListener("click",()=>b.closest(".window").classList.add("hidden")));document.querySelectorAll(".min").forEach(b=>b.addEventListener("click",()=>b.closest(".window").classList.add("hidden")));
+function tick(){clock.textContent=new Date().toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"})}tick();setInterval(tick,1000);
 })();
